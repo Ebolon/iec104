@@ -32,15 +32,12 @@ class IEC104Client(object):
         data = yield Task(self.stream.read_bytes, length)
         s_acpi = ''.join(struct.unpack_from('4s', data))  # keep 0x00
         acpi_control = struct.unpack_from('B', data)[0]
-        print binascii.hexlify(s_acpi)
 
         if acpi_control & 1 == 0:  # I-FRAME
             ssn, rsn = acpi.parse_i_frame(s_acpi)
-            LOG.debug("ssn: %s, rsn: %s".format(ssn, rsn))
+            LOG.debug("ssn: {}, rsn: {}".format(ssn, rsn))
             s_asdu = ConstBitStream(bytes=data, offset=4*8)
-
             o_asdu = asdu.ASDU(s_asdu)
-
 
         elif acpi_control & 3 == 1:  # S-FRAME
             print "B"

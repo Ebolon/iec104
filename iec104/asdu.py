@@ -7,18 +7,14 @@ LOG = logging.getLogger()
 
 class ASDU(object):
     def __init__(self, data):
-        print binascii.hexlify(data.bytes)
+        print "hex: ", binascii.hexlify(data.bytes)
         self.type_id = data.read('uint:8')
         sq = data.read('bool')  # Single or Sequence
         sq_count = data.read('uint:7')
         self.cot = data.read('uint:8')
 
         self.asdu = data.read('uint:16')
-
-        print self.type_id
-        print self.cot
-        print self.asdu
-        #self.type_id, vs, self.cot, self.asdu = struct.unpack_from('3BH', data)
+        LOG.debug("Type: {}, COT: {}, ASDU: {}".format(self.type_id, self.cot, self.asdu))
 
         self.objs = []
         if not sq:
@@ -53,7 +49,7 @@ class InfoObj(object):
     def __init__(self, data):
         self.ioa = data.read("int:16")
         data.read("int:16")
-        print "ioa", self.ioa
+        print "IOA: ", self.ioa
 
 
 class SIQ(InfoObj):
@@ -67,6 +63,17 @@ class SIQ(InfoObj):
         self.spi = data.read('bool')
 
 
+class DIQ(InfoObj):
+    def __init__(self, data):
+        super(DIQ, self).__init__(data)
+        self.iv = data.read('bool')
+        self.nt = data.read('bool')
+        self.sb = data.read('bool')
+        self.bl = data.read('bool')
+        data.read('int:2')  # reserve
+        self.dpi = data.read('uint:2')
+
+
 class MSpNa1(SIQ):
     type_id = 1
     name = 'M_SP_NA_1'
@@ -74,10 +81,7 @@ class MSpNa1(SIQ):
 
     def __init__(self, data):
         super(MSpNa1, self).__init__(data)
-
-
-
-        print "val", self.spi
+        LOG.debug('Obj: M_SP_NA_1, Value: {}'.format(self.spi))
 
 
 class MSpTa1(InfoObj):
@@ -87,13 +91,16 @@ class MSpTa1(InfoObj):
 
     def __init__(self, data):
         super(MSpTa1, self).__init__(data)
-        pass
 
 
-class MDpNa1(InfoObj):
+class MDpNa1(DIQ):
     type_id = 3
     name = 'M_DP_NA_1'
     description = 'Double-point information without time tag'
+
+    def __init__(self, data):
+        super(MDpNa1, self).__init__(data)
+        LOG.debug('Obj: M_DP_NA_1, Value: {}'.format(self.dpi))
 
 
 class MDpTa1(InfoObj):
@@ -130,6 +137,12 @@ class MMeNa1(InfoObj):
     type_id = 9
     name = 'M_ME_NA_1'
     description = 'Measured value, normalized value'
+
+    def __init__(self, data):
+        super(MMeNa1, self).__init__(data)
+        self.nva = data.read('int:8')
+        self.nva = data.read('int:16')
+        LOG.debug('Obj: M_ME_NA_1, Value: {}'.format(self.nva))
 
 
 class MMeTa1(InfoObj):
